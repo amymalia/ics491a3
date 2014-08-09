@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
         }
       }
     }
-    else if (option == 2) {
+    else if (option == OPT_THEY_OWE_ME) {
       option = OPT_UNSET;
       while (option != 1 && option != OPT_EXIT) {
         printf("You owe these people money.\n");
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
       }
     }
     /*need to add if-else stuffies*/
-    else if (option == 3) {
+    else if (option == OPT_ADD_DEBT) {
       option = OPT_UNSET;
       while (option != 3 && option != OPT_EXIT) {
         printf("Type the number corresponding to your choice:\n");
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
         }
       }
     }
-    else if (option == 4)
+    else if (option == OPT_CLEAR_DEBT)
     {
       option = 0;
       while (option != 2 && option != 5)
