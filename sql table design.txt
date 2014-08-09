@@ -1,0 +1,13 @@
+create table `users` (
+	`uid` char(20) NOT NULL UNIQUE,
+	`pwd` char(15) NOT NULL default '',
+	`admin` BIT(1) NOT NULL default 0
+);
+
+create table debts (
+	`idnum` mediumint(5) unsigned not null auto_increment unique,
+	`owed_by` char(20) NOT NULL default '',
+	`owed_to` char(20) NOT NULL default '',
+	`amt` DOUBLE(20,2) UNSIGNED NOT NULL default 0,
+	`paid` BIT(1) NOT NULL default 0
+);

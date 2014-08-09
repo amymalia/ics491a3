@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
     }
     else if (option == OPT_CLEAR_DEBT)
     {
-      option = 0;
+      option = OPT_UNSET;
       while (option != 2 && option != 5)
       {
         printf("Type the number corresponding to your choice:\n");
@@ -206,17 +206,7 @@ int main(int argc, char* argv[])
       }
     }
   }
-  
-  /*at this point, we need to connect to the database
-   if the input compared to the password is not 0
-   printf("Sorry, but that was an incorrect username/password combination")
-   else
-   printf("Welcome username!")
-   access = 1
-   
-   if(access)
-   login successful*/
-  
+  printf("Goodbye.\r\n");
 }
 
 
