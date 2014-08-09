@@ -54,6 +54,7 @@ int main(int argc, char* argv[])
   char name[MAX_NAME_LENGTH];
   int amount, option;
   if (argc > 1) {
+    // What is this? We never use the arguments, and I don't know what a.out is supposed to point to. -JS 8/9
     printf("Sorry. You have entered too many arguments.\n");
     printf("To run the debt-tracker, you must use \"a.out\" as the only argument.\n");
     printf("Goodbye!");
@@ -78,21 +79,22 @@ int main(int argc, char* argv[])
     gets(user.password);
     
     // Actual SQL lookup is carried out here.
-    sprintf(querybuf, "SELECT uid FROM users WHERE uid='%s', pwd='%s';", user.username, user.password);
+    sprintf(querybuf, "SELECT uid FROM users WHERE uid='%s' AND pwd='%s';", user.username, user.password);
     if (mysql_wrapper(mysql, querybuf)) {
       fprintf(stderr, "FATAL SQL DB ERROR. Program will now terminate.\r\n");
+      fprintf(stderr, "%s\r\n", mysql_error(mysql));
       return 1;
     }
     res = mysql_use_result(mysql);
     row = mysql_fetch_row(res);
     if (!row)
-      printf("That username and password combination is invalid.");
+      printf("That username and password combination is invalid.\r\n");
     else {
-      printf("Welcome %s!\n", user.username);
       user.access = 1;
     }
     mysql_free_result(res);
   }
+  printf("Welcome %s!\n", user.username);
   
   option = OPT_UNSET;
   while (option != OPT_EXIT) {
