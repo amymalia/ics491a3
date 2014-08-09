@@ -31,6 +31,9 @@ char querybuf[20000];
 #define OPT_CLEAR_DEBT 4
 #define OPT_EXIT 5
 
+#define ACCESS_UNAUTHENTICATED 0
+#define ACCESS_AUTHENTICATED 1
+
 
 void getUsername(char[]);
 void getName(char[]);
@@ -49,7 +52,7 @@ int main(int argc, char* argv[])
   struct userdata user;
   memset(user.username, 0, sizeof(user.username));
   memset(user.password, 0, sizeof(user.password));
-  user.access = 0;
+  user.access = ACCESS_UNAUTHENTICATED;
   
   char name[MAX_NAME_LENGTH];
   int amount, option;
@@ -69,7 +72,7 @@ int main(int argc, char* argv[])
   }
   
   /* Obtain authentication from user. Several exploits exist here to force authentication. */
-  while (user.access == 0) {
+  while (user.access == ACCESS_UNAUTHENTICATED) {
     // EXPLOIT - SQL INJECTION: if username is "VALID_USERNAME';--", password will not be verified.
     printf("Please enter your username: ");
     getUsername(user.username);
@@ -90,7 +93,7 @@ int main(int argc, char* argv[])
     if (!row)
       printf("That username and password combination is invalid.\r\n");
     else {
-      user.access = 1;
+      user.access = ACCESS_AUTHENTICATED;
     }
     mysql_free_result(res);
   }
