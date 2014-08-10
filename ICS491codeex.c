@@ -200,11 +200,18 @@ int main(int argc, char* argv[])
         if (option == 1) {
           printf("Type the name of the person to whom you owe money: ");
           getName(name);
+          // TODO: Verify the above name is in the db.
           printf("How much do you owe %s? ", name);
           /*no number checking*/
           printf("> ");
           scanf("%d", &amount);
           /*do other stuff (need to add this debt to the database..)*/
+          sprintf(querybuf, "INSERT INTO debts (owed_by, owed_to, amt) VALUES ('%s','%s',%d)", user.username, name, amount);
+          if (mysql_wrapper(mysql, querybuf)) {
+            printf("A fatal DB error occurred while creating your debt. Program will now terminate.");
+            return 1;
+          }
+          printf("Debt created.");
         }
         else if (option == 2) {
           printf("Type the name of the person who owes you money: ");
@@ -214,6 +221,12 @@ int main(int argc, char* argv[])
           printf("> ");
           scanf("%d", &amount);
           /*do other stuff (need to add this debt to the database..)*/
+          sprintf(querybuf, "INSERT INTO debts (owed_by, owed_to, amt) VALUES ('%s','%s',%d);", name, user.username, amount);
+          if (mysql_wrapper(mysql, querybuf)) {
+            printf("A fatal DB error occurred while creating your debt. Program will now terminate.");
+            return 1;
+          }
+          printf("Debt created.");
         }
         else if (option == 4) {
           option = 5;
