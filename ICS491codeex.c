@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 // MySQL includes and initialization block -JS 8/9
 
@@ -83,6 +84,7 @@ int main(int argc, char* argv[])
     
     // Actual SQL lookup is carried out here.
     sprintf(querybuf, "SELECT uid FROM users WHERE uid='%s' AND pwd='%s';", user.username, user.password);
+    printf("QUERY: %s", querybuf);
     if (mysql_wrapper(mysql, querybuf)) {
       fprintf(stderr, "FATAL SQL DB ERROR. Program will now terminate.\r\n");
       fprintf(stderr, "%s\r\n", mysql_error(mysql));
@@ -112,7 +114,28 @@ int main(int argc, char* argv[])
     if (option == OPT_I_OWE_THEM) {
       option = OPT_UNSET;
       while (option != 1 && option != OPT_EXIT) {
-        printf("These people owe you money.\n");
+        // Compose query:
+        sprintf(querybuf, "SELECT owed_by, amt FROM debts WHERE owed_to='%s' AND paid=0", user.username);
+        printf("QUERY: %s", querybuf);
+        if (mysql_wrapper(mysql, querybuf)) {
+          // Query failed.
+          printf("Nobody currently owes you money.\r\n");
+          option = 1;
+          continue;
+        }
+        res = mysql_store_result(mysql);
+        if (mysql_num_rows(res) < 1) {
+          // Query succeeded with no results returned.
+          mysql_free_result(res);
+          printf("Nobody currently owes you money.\r\n");
+          option = 1;
+          continue;
+        }
+        printf("These people owe you money:\n");
+        while ((row = mysql_fetch_row(res)))
+          printf("  %s: $%s\n", row[0], row[1]);
+        mysql_free_result(res);
+        printf("\n");
         printf("Type the number corresponding to your choice:\n");
         printf("1. Return to main screen\n");
         printf("2. Exit the debt tracker\n");
@@ -212,10 +235,30 @@ int main(int argc, char* argv[])
   printf("Goodbye.\r\n");
 }
 
-
-
-
 void getUsername(char input[])
+{
+  char tempUserName[MAX_NAME_LENGTH];
+  char character = fgetc(stdin);
+  int index = 0;
+  
+  // this while loop trims any non-letter characters at the beginning of the line
+  while (!isalpha(character))
+    character = fgetc(stdin);
+  
+  // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
+  while (character != '\n' && index < MAX_NAME_LENGTH - 1)
+  {
+    printf("Appending character %c.\n", character);
+    tempUserName[index++] = character;
+    character = fgetc(stdin);
+  }
+  
+  tempUserName[index] = 0;
+  strcpy(input, tempUserName);
+  printf("TUN: %s; input: %s", tempUserName, input);
+}
+
+void getName(char input[])
 {
   char tempUserName[MAX_NAME_LENGTH];
   char character;
@@ -237,30 +280,6 @@ void getUsername(char input[])
     character = fgetc(stdin);
   }
   strcpy(input, tempUserName);
-}
-
-void getName(char input[])
-{
-  char tempName[MAX_NAME_LENGTH];
-  char character;
-  int length;
-  character = fgetc(stdin);
-  length = 0;
-  /*this while loop trims any white space at the beginning of the line*/
-  while (character == ' ' || character == '\n')
-  {
-    character = fgetc(stdin);
-  }
-  /*this while loop reads in characters until the end of the line is reached,
-   or until the space reserved for the username is filled*/
-  while (character != '\n' && strlen(tempName) < MAX_NAME_LENGTH)
-  {
-    tempName[length] = character;
-    tempName[length + 1] = '\0';
-    length += 1;
-    character = fgetc(stdin);
-  }
-  strcpy(input, tempName);
 }
 
 // MySQL wrapper to automate some of the error reporting. -JS 8/9
