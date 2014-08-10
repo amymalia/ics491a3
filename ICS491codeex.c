@@ -6,7 +6,7 @@
 // MySQL includes and initialization block -JS 8/9
 
 // System header include.
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 // MySQL wrapper automates error reporting.
 int mysql_wrapper(MYSQL *mysql, char *query);
@@ -200,18 +200,20 @@ int main(int argc, char* argv[])
         if (option == 1) {
           printf("Type the name of the person to whom you owe money: ");
           getName(name);
-          // TODO: Verify the above name is in the db.
           printf("How much do you owe %s? ", name);
           /*no number checking*/
           printf("> ");
           scanf("%d", &amount);
-          /*do other stuff (need to add this debt to the database..)*/
-          sprintf(querybuf, "INSERT INTO debts (owed_by, owed_to, amt) VALUES ('%s','%s',%d)", user.username, name, amount);
-          if (mysql_wrapper(mysql, querybuf)) {
-            printf("A fatal DB error occurred while creating your debt. Program will now terminate.");
-            return 1;
-          }
-          printf("Debt created.");
+          /*add the debt to database*/
+          	sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", user.username, name, amount);
+          	if(mysql_wrapper(mysql, querybuf)){
+          		//Insert failed
+          		printf("Your debt has not been added.\r\n");	
+          	}
+          	else{
+          		//Insert succeeded
+          		printf("Your debt has been added.\r\n");
+          	}
         }
         else if (option == 2) {
           printf("Type the name of the person who owes you money: ");
@@ -220,16 +222,19 @@ int main(int argc, char* argv[])
           /*no number checking*/
           printf("> ");
           scanf("%d", &amount);
-          /*do other stuff (need to add this debt to the database..)*/
-          sprintf(querybuf, "INSERT INTO debts (owed_by, owed_to, amt) VALUES ('%s','%s',%d);", name, user.username, amount);
-          if (mysql_wrapper(mysql, querybuf)) {
-            printf("A fatal DB error occurred while creating your debt. Program will now terminate.");
-            return 1;
-          }
-          printf("Debt created.");
+          /*add the debt to database*/
+            sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", name, user.username, amount);
+          	if(mysql_wrapper(mysql, querybuf)){
+          		//Insert failed
+          		printf("A fatal DB error occurred while creating your debt. Program will now terminate.\r\n");	
+          	}
+          	else{
+          		//Insert succeeded
+          		printf("Your debt has been added.\r\n");
+          	}
         }
         else if (option == 4) {
-          option = 5;
+          option = OPT_EXIT;
         }
         else if (option != 3) {
           printf("That is not a valid option.\n");
@@ -253,10 +258,19 @@ int main(int argc, char* argv[])
           printf("Type the name of the person who paid you back: ");
           getName(name);
           /*remove this debt from the database*/
+            sprintf(querybuf,  "DELETE from debts WHERE owed_by = '%s' AND owed_to = '%s'", name, user.username);
+          	if(mysql_wrapper(mysql, querybuf)){
+          		//Remove failed
+          		printf("A fatal DB error occurred while creating your debt. Program will now terminate.\r\n");	
+          	}
+          	else{
+          		//Remove succeeded
+          		printf("Your debt has been removed.\r\n");
+          	}
         }
         else if (option == 3)
         {
-          option = 5;
+          option = OPT_EXIT;
         }
         else if (option != 2)
         {
@@ -275,42 +289,42 @@ void getUsername(char input[])
   int index = 0;
   
   // this while loop trims any non-letter characters at the beginning of the line
-  while (!isalpha((character = fgetc(stdin))));
-  
-  // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
-  while (character != '\n' && index < MAX_NAME_LENGTH)
-  {
-    tempUserName[index++] = character;
-    character = fgetc(stdin);
+  while (!isalpha((character = fgetc(stdin)))){
+  	character = fgetc(stdin);
   }
   
-  tempUserName[index] = 0;
-  strcpy(input, tempUserName);
+ 	 // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
+  	while (character != '\n' && index < MAX_NAME_LENGTH)
+ 	 {
+  	  tempUserName[index++] = character;
+   	 character = fgetc(stdin);
+ 	 }
+ 	 tempUserName[index] = 0;
+ 	 strcpy(input, tempUserName);
 }
 
 void getName(char input[])
 {
-  char tempUserName[MAX_NAME_LENGTH];
-  char character;
-  int length;
-  character = fgetc(stdin);
-  length = 0;
-  /*this while loop trims any white space at the beginning of the line*/
-  while (character == ' ' || character == '\n')
-  {
-    character = fgetc(stdin);
+  char tempUserName[MAX_NAME_LENGTH + 1];
+  char character='1';
+  int index = 0;
+  
+  // this while loop trims any non-letter characters at the beginning of the line
+ 	while (!isalpha(character)){
+  	character = fgetc(stdin);
   }
-  /*this while loop reads in characters until the end of the line is reached,
-   or until the space reserved for the username is filled*/
-  while (character != '\n' && strlen(tempUserName) < MAX_NAME_LENGTH)
-  {
-    length = strlen(tempUserName);
-    tempUserName[length] = character;
-    tempUserName[length + 1] = '\0';
-    character = fgetc(stdin);
-  }
-  strcpy(input, tempUserName);
+  
+ 	 // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
+  	while (character != '\n' && index < MAX_NAME_LENGTH)
+ 	 {
+  	  tempUserName[index++] = character;
+   	  character = fgetc(stdin);
+ 	 }
+  
+ 	 tempUserName[index] = 0;
+ 	 strcpy(input, tempUserName);
 }
+
 
 // MySQL wrapper to automate some of the error reporting. -JS 8/9
 int mysql_wrapper(MYSQL *mysql, char *query)
