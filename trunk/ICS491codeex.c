@@ -152,7 +152,27 @@ int main(int argc, char* argv[])
     else if (option == OPT_THEY_OWE_ME) {
       option = OPT_UNSET;
       while (option != 1 && option != OPT_EXIT) {
-        printf("You owe these people money.\n");
+        // Compose query:
+        sprintf(querybuf, "SELECT owed_to, amt FROM debts WHERE owed_by='%s' AND paid=0", user.username);
+        if (mysql_wrapper(mysql, querybuf)) {
+          // Query failed.
+          printf("You don't currently owe anyone any money.\r\n");
+          option = 1;
+          continue;
+        }
+        res = mysql_store_result(mysql);
+        if (mysql_num_rows(res) < 1) {
+          // Query succeeded with no results returned.
+          mysql_free_result(res);
+          printf("You don't currently owe anyone any money.\r\n");
+          option = 1;
+          continue;
+        }
+        printf("You owe these people money:\n");
+        while ((row = mysql_fetch_row(res)))
+          printf("  %s: $%s\n", row[0], row[1]);
+        mysql_free_result(res);
+        printf("\n");
         printf("Type the number corresponding to your choice:\n");
         printf("1. Return to main screen\n");
         printf("2. Exit the debt tracker\n");
