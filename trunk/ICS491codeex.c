@@ -35,6 +35,7 @@ char querybuf[20000];
 #define ACCESS_UNAUTHENTICATED 0
 #define ACCESS_AUTHENTICATED 1
 
+#define QUERY_DEBUG 1
 
 void getUsername(char[]);
 void getName(char[]);
@@ -43,8 +44,9 @@ void getName(char[]);
 // Note: While these items are contiguous in code, they may not be contiguous in memory due to data structure padding.
 // See http://stackoverflow.com/questions/8377667/layout-in-memory-of-a-struct-struct-of-arrays-and-array-of-structs-in-c-c for details.
 struct userdata {
-  char username[MAX_NAME_LENGTH];
-  char password[MAX_PWD_LENGTH];
+  // Uses +1 to account for the C-style '\0'-terminated string.
+  char username[MAX_NAME_LENGTH + 1];
+  char password[MAX_PWD_LENGTH + 1];
   int access;
 };
 
@@ -55,7 +57,7 @@ int main(int argc, char* argv[])
   memset(user.password, 0, sizeof(user.password));
   user.access = ACCESS_UNAUTHENTICATED;
   
-  char name[MAX_NAME_LENGTH];
+  char name[MAX_NAME_LENGTH + 1];
   int amount, option;
   if (argc > 1) {
     // What is this? We never use the arguments, and I don't know what a.out is supposed to point to. -JS 8/9
@@ -84,7 +86,6 @@ int main(int argc, char* argv[])
     
     // Actual SQL lookup is carried out here.
     sprintf(querybuf, "SELECT uid FROM users WHERE uid='%s' AND pwd='%s';", user.username, user.password);
-    printf("QUERY: %s", querybuf);
     if (mysql_wrapper(mysql, querybuf)) {
       fprintf(stderr, "FATAL SQL DB ERROR. Program will now terminate.\r\n");
       fprintf(stderr, "%s\r\n", mysql_error(mysql));
@@ -116,7 +117,6 @@ int main(int argc, char* argv[])
       while (option != 1 && option != OPT_EXIT) {
         // Compose query:
         sprintf(querybuf, "SELECT owed_by, amt FROM debts WHERE owed_to='%s' AND paid=0", user.username);
-        printf("QUERY: %s", querybuf);
         if (mysql_wrapper(mysql, querybuf)) {
           // Query failed.
           printf("Nobody currently owes you money.\r\n");
@@ -237,25 +237,22 @@ int main(int argc, char* argv[])
 
 void getUsername(char input[])
 {
-  char tempUserName[MAX_NAME_LENGTH];
-  char character = fgetc(stdin);
+  char tempUserName[MAX_NAME_LENGTH + 1];
+  char character;
   int index = 0;
   
   // this while loop trims any non-letter characters at the beginning of the line
-  while (!isalpha(character))
-    character = fgetc(stdin);
+  while (!isalpha((character = fgetc(stdin))));
   
   // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
-  while (character != '\n' && index < MAX_NAME_LENGTH - 1)
+  while (character != '\n' && index < MAX_NAME_LENGTH)
   {
-    printf("Appending character %c.\n", character);
     tempUserName[index++] = character;
     character = fgetc(stdin);
   }
   
   tempUserName[index] = 0;
   strcpy(input, tempUserName);
-  printf("TUN: %s; input: %s", tempUserName, input);
 }
 
 void getName(char input[])
@@ -285,7 +282,9 @@ void getName(char input[])
 // MySQL wrapper to automate some of the error reporting. -JS 8/9
 int mysql_wrapper(MYSQL *mysql, char *query)
 {
+  if (QUERY_DEBUG)
+    printf("QUERY: %s\r\n", query);
   if (mysql_errno(mysql))
-    fprintf(stderr, "MYSQLERROR: %s (generated from query %s)", mysql_error(mysql), query);
+    fprintf(stderr, "MYSQLERROR: %s (generated from query %s)\r\n", mysql_error(mysql), query);
   return mysql_query(mysql, query);
 }
