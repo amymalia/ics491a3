@@ -317,7 +317,7 @@ void getUsername(char input[])
 
 void getPassword(char input[])
 {
-  char tempPass[MAX_PWD_LENGTH];
+  char tempPass[MAX_PWD_LENGTH + 1];
   char character;
   int index = 0;
   character = fgetc(stdin);
