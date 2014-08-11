@@ -258,7 +258,6 @@ int main(int argc, char* argv[])
         {
           printf("Type the name of the person who paid you back: ");
           getUsername(name);
-          /*remove this debt from the database*/
           sprintf(querybuf,  "UPDATE debts SET paid=1 WHERE owed_by='%s' AND owed_to='%s'", name, user.username);
           if(mysql_wrapper(mysql, querybuf)){
             //Remove failed; this is a terminating condition because further action may prove harmful to the DB.
