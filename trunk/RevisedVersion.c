@@ -24,7 +24,6 @@ char querybuf[20000];
 // Magic numbers are bad! Pre-defining constants makes everyone's life easier.
 #define MAX_NAME_LENGTH 20
 #define MAX_PWD_LENGTH 15
-#define INT_MAX 2147483647 
 
 #define OPT_UNSET 0
 #define OPT_I_OWE_THEM 1
@@ -39,9 +38,7 @@ char querybuf[20000];
 #define QUERY_DEBUG 1
 
 void getUsername(char[]);
-void getName(char[]);
 void getPassword(char[]);
-void getAmount(int[]);
 
 // Struct for storage of user data, designed with overflow in mind.
 // Note: While these items are contiguous in code, they may not be contiguous in memory due to data structure padding.
@@ -59,7 +56,7 @@ int main(int argc, char* argv[])
   memset(user.username, 0, sizeof(user.username));
   memset(user.password, 0, sizeof(user.password));
   user.access = ACCESS_UNAUTHENTICATED;
-  
+ 
   char name[MAX_NAME_LENGTH + 1];
   int amount, option;
   if (argc > 1) {
@@ -69,24 +66,24 @@ int main(int argc, char* argv[])
     printf("Goodbye!");
     return 1;
   }
-  
+ 
   /* Initialize the MySQL instance. */
   mysql = mysql_init(NULL);
   if (!mysql_real_connect(mysql, "lucien.twilightparadox.com", "ics491a3", "SUPER_SECURE_ICS", "ICS491A3", 20000, NULL, 0)) {
     fprintf(stderr, "Error while connecting to DB: %s\r\n", mysql_error(mysql));
     return 1;
   }
-  
+ 
   /* Obtain authentication from user. Several exploits exist here to force authentication. */
   while (user.access == ACCESS_UNAUTHENTICATED) {
     // EXPLOIT - SQL INJECTION: if username is "VALID_USERNAME';--", password will not be verified.
     printf("Please enter your username: ");
     getUsername(user.username);
-    
+   
     // EXPLOIT - BUFFER OVERFLOW: Use of unbounded gets() on a bounded array allows for overflow into the ACCESS variable, granting access.
     printf("Please enter your password: ");
     getPassword(user.password);
-    
+   
     // Actual SQL lookup is carried out here.
     sprintf(querybuf, "SELECT uid FROM users WHERE uid='%s' AND pwd='%s';", user.username, user.password);
     if (mysql_wrapper(mysql, querybuf)) {
@@ -104,7 +101,7 @@ int main(int argc, char* argv[])
     mysql_free_result(res);
   }
   printf("Welcome %s!\n", user.username);
-  
+ 
   option = OPT_UNSET;
   while (option != OPT_EXIT) {
     printf("Type the number corresponding to your choice:\n");
@@ -202,48 +199,50 @@ int main(int argc, char* argv[])
         scanf("%d", &option);
         if (option == 1) {
           printf("Type the name of the person to whom you owe money: ");
-          getName(name);
+          getUsername(name);
           printf("How much do you owe %s? ", name);
-          printf("> ");
           /*number checking*/
-          scanf("%d", &amount);   
-          if((!isdigit(amount)) && amount > 0){
+          printf("> ");
+          scanf("%d", &amount);
+           if((!isdigit(amount)) && amount > 0){
           /*add the debt to database*/
-          	sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", user.username, name, amount);
-          	if(mysql_wrapper(mysql, querybuf)){
-          		//Insert failed
-          		printf("A fatal DB error occurred while creating your debt. Program will now terminate.\r\n");	
-          	}
-          	else{
-          		//Insert succeeded
-          		printf("Your debt has been added.\r\n");
-          	}
-          	}
-          	else{
+          sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", user.username, name, amount);
+          if(mysql_wrapper(mysql, querybuf)){
+            //Insert failed; this is a terminating condition because further action may prove harmful to the DB.
+            printf("A fatal DB error occurred while creating your debt. Your debt has not been added. Program will now terminate.\r\n");
+            return 1;
+          }
+          else{
+            //Insert succeeded
+            printf("Your debt has been added.\r\n");
+          }
+          }
+        	else{
           		//input was not valid
           		printf("Your input was not valid. Please input a positive integer.\r\n");
   			}
         }
         else if (option == 2) {
           printf("Type the name of the person who owes you money: ");
-          getName(name);
+          getUsername(name);
           printf("How much does %s owe you? ", name);
           /*number checking*/
           printf("> ");
           scanf("%d", &amount);
-           if((!isdigit(amount)) && amount > 0){
+        if((!isdigit(amount)) && amount > 0){
           /*add the debt to database*/
-            sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", name, user.username, amount);
-          	if(mysql_wrapper(mysql, querybuf)){
-          		//Insert failed
-          		printf("A fatal DB error occurred while creating your debt. Program will now terminate.\r\n");	
-          	}
-          	else{
-          		//Insert succeeded
-          		printf("Your debt has been added.\r\n");
-          	}
-          	}
-          	  	else{
+          sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", name, user.username, amount);
+          if(mysql_wrapper(mysql, querybuf)){
+            //Insert failed; this is a terminating condition because further action may prove harmful to the DB.
+            printf("A fatal DB error occurred while creating your debt. Your debt has not been added. Program will now terminate.\r\n");
+            return 1;
+          }
+          else{
+            //Insert succeeded
+            printf("Your debt has been added.\r\n");
+          }
+          }
+            else{
           		//input was not valid
           		printf("Your input was not valid. Please input a positive integer.\r\n");
   			}
@@ -267,21 +266,21 @@ int main(int argc, char* argv[])
         printf("3. Exit the debt tracker\n");
         printf("> ");
         scanf("%d", &option);
-        
+       
         if (option == 1)
         {
           printf("Type the name of the person who paid you back: ");
-          getName(name);
-          /*remove this debt from the database*/
-            sprintf(querybuf,  "DELETE from debts WHERE owed_by = '%s' AND owed_to = '%s'", name, user.username);
-          	if(mysql_wrapper(mysql, querybuf)){
-          		//Remove failed
-          		printf("A fatal DB error occurred while creating your debt. Program will now terminate.\r\n");	
-          	}
-          	else{
-          		//Remove succeeded
-          		printf("Your debt has been removed.\r\n");
-          	}
+          getUsername(name);
+          sprintf(querybuf,  "UPDATE debts SET paid=1 WHERE owed_by='%s' AND owed_to='%s'", name, user.username);
+          if(mysql_wrapper(mysql, querybuf)){
+            //Remove failed; this is a terminating condition because further action may prove harmful to the DB.
+            printf("A fatal DB error occurred while resolving your debt. Program will now terminate.\r\n");
+            return 1;
+          }
+          else{
+            //Remove succeeded
+            printf("Your debt has been marked as paid.\r\n");
+          }
         }
         else if (option == 3)
         {
@@ -302,20 +301,18 @@ void getUsername(char input[])
   char tempUserName[MAX_NAME_LENGTH + 1];
   char character;
   int index = 0;
-  
+ 
   // this while loop trims any non-letter characters at the beginning of the line
-  while (!isalpha((character = fgetc(stdin)))){
-  	character = fgetc(stdin);
+  while (!isalpha((character = fgetc(stdin))));
+ 
+  // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
+  while (character != '\n' && index < MAX_NAME_LENGTH)
+  {
+    tempUserName[index++] = character;
+    character = fgetc(stdin);
   }
-  
- 	 // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
-  	while (character != '\n' && index < MAX_NAME_LENGTH)
- 	 {
-  	  tempUserName[index++] = character;
-   	 character = fgetc(stdin);
- 	 }
- 	 tempUserName[index] = 0;
- 	 strcpy(input, tempUserName);
+  tempUserName[index] = 0;
+  strcpy(input, tempUserName);
 }
 
 void getPassword(char input[])
@@ -323,42 +320,17 @@ void getPassword(char input[])
   char tempPass[MAX_PWD_LENGTH];
   char character;
   int index = 0;
- //  this while loop trims any non-letter characters at the beginning of the line
-  while (!isalpha((character = fgetc(stdin)))){
-  	character = fgetc(stdin);
+  //  this while loop trims any non-letter characters at the beginning of the line
+  while (!isalpha((character = fgetc(stdin))));
+ 
+  // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
+  while (character != '\n' && index < MAX_PWD_LENGTH)
+  {
+    tempPass[index++] = character;
+    character = fgetc(stdin);
   }
-  
- 	 // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
-  	while (character != '\n' && index < MAX_PWD_LENGTH)
- 	 {
-  	  tempPass[index++] = character;
-   	 character = fgetc(stdin);
- 	 }
- 	 tempPass[index] = 0;
- 	 strcpy(input, tempPass);
-}
-
-
-void getName(char input[])
-{
-  char tempUserName[MAX_NAME_LENGTH + 1];
-  char character='1';
-  int index = 0;
-  
-  // this while loop trims any non-letter characters at the beginning of the line
- 	while (!isalpha(character)){
-  	character = fgetc(stdin);
-  }
-  
- 	 // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
-  	while (character != '\n' && index < MAX_NAME_LENGTH)
- 	 {
-  	  tempUserName[index++] = character;
-   	  character = fgetc(stdin);
- 	 }
-  
- 	 tempUserName[index] = 0;
- 	 strcpy(input, tempUserName);
+  tempPass[index] = 0;
+  strcpy(input, tempPass);
 }
 
 
@@ -371,3 +343,4 @@ int mysql_wrapper(MYSQL *mysql, char *query)
     fprintf(stderr, "MYSQLERROR: %s (generated from query %s)\r\n", mysql_error(mysql), query);
   return mysql_query(mysql, query);
 }
+
