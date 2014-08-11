@@ -320,13 +320,28 @@ void getPassword(char input[])
   char tempPass[MAX_PWD_LENGTH];
   char character;
   int index = 0;
+  character = fgetc(stdin);
   //  this while loop trims any non-letter characters at the beginning of the line
-  while (!isalpha((character = fgetc(stdin))));
- 
+  while (!isalnum(character))
+  {
+  	 character = fgetc(stdin);
+  }
+  
   // this while loop reads in characters until the end of the line is reached, or until the space reserved for the username is filled
   while (character != '\n' && index < MAX_PWD_LENGTH)
   {
-    tempPass[index++] = character;
+    if(isalnum(character) || (character == '@'))
+    {
+      tempPass[index++] = character;
+      character = fgetc(stdin);
+    }
+    else
+    {
+      break;
+    }
+  }
+  while (character != '\n')
+  {
     character = fgetc(stdin);
   }
   tempPass[index] = 0;
