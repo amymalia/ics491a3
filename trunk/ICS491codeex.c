@@ -58,13 +58,6 @@ int main(int argc, char* argv[])
   
   char name[MAX_NAME_LENGTH + 1];
   int amount, option;
-  if (argc > 1) {
-    // What is this? We never use the arguments, and I don't know what a.out is supposed to point to. -JS 8/9
-    printf("Sorry. You have entered too many arguments.\n");
-    printf("To run the debt-tracker, you must use \"a.out\" as the only argument.\n");
-    printf("Goodbye!");
-    return 1;
-  }
   
   /* Initialize the MySQL instance. */
   mysql = mysql_init(NULL);
