@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
   
   /* Obtain authentication from user. Several exploits exist here to force authentication. */
   while (user.access == ACCESS_UNAUTHENTICATED) {
-    // EXPLOIT - SQL INJECTION: if username is "VALID_USERNAME';--", password will not be verified.
+    // EXPLOIT - SQL INJECTION: if username is "VALID_USERNAME';-- ", password will not be verified.
     printf("Please enter your username: ");
     getUsername(user.username);
     
