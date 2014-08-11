@@ -206,8 +206,9 @@ int main(int argc, char* argv[])
           /*add the debt to database*/
           sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", user.username, name, amount);
           if(mysql_wrapper(mysql, querybuf)){
-            //Insert failed
-            printf("Your debt has not been added.\r\n");
+            //Insert failed; this is a terminating condition because further action may prove harmful to the DB.
+            printf("A fatal DB error occurred while creating your debt. Your debt has not been added. Program will now terminate.\r\n");
+            return 1;
           }
           else{
             //Insert succeeded
@@ -224,8 +225,9 @@ int main(int argc, char* argv[])
           /*add the debt to database*/
           sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", name, user.username, amount);
           if(mysql_wrapper(mysql, querybuf)){
-            //Insert failed
-            printf("A fatal DB error occurred while creating your debt. Program will now terminate.\r\n");
+            //Insert failed; this is a terminating condition because further action may prove harmful to the DB.
+            printf("A fatal DB error occurred while creating your debt. Your debt has not been added. Program will now terminate.\r\n");
+            return 1;
           }
           else{
             //Insert succeeded
@@ -257,14 +259,15 @@ int main(int argc, char* argv[])
           printf("Type the name of the person who paid you back: ");
           getUsername(name);
           /*remove this debt from the database*/
-          sprintf(querybuf,  "DELETE from debts WHERE owed_by = '%s' AND owed_to = '%s'", name, user.username);
+          sprintf(querybuf,  "UPDATE debts SET paid=1 WHERE owed_by='%s' AND owed_to='%s'", name, user.username);
           if(mysql_wrapper(mysql, querybuf)){
-            //Remove failed
-            printf("A fatal DB error occurred while deleting your debt. Program will now terminate.\r\n");
+            //Remove failed; this is a terminating condition because further action may prove harmful to the DB.
+            printf("A fatal DB error occurred while resolving your debt. Program will now terminate.\r\n");
+            return 1;
           }
           else{
             //Remove succeeded
-            printf("Your debt has been removed.\r\n");
+            printf("Your debt has been marked as paid.\r\n");
           }
         }
         else if (option == 3)
