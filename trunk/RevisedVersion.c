@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
           printf("> ");
           /*number checking*/
           scanf("%d", &amount);   
-          if((isdigit(amount)) && amount > 0){
+          if((!isdigit(amount)) && amount > 0){
           /*add the debt to database*/
           	sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", user.username, name, amount);
           	if(mysql_wrapper(mysql, querybuf)){
@@ -228,9 +228,10 @@ int main(int argc, char* argv[])
           printf("Type the name of the person who owes you money: ");
           getName(name);
           printf("How much does %s owe you? ", name);
-          /*no number checking*/
+          /*number checking*/
           printf("> ");
           scanf("%d", &amount);
+           if((!isdigit(amount)) && amount > 0){
           /*add the debt to database*/
             sprintf(querybuf,  "INSERT INTO debts (owed_by, owed_to, amt, paid) VALUES ('%s', '%s', '%d', '0')", name, user.username, amount);
           	if(mysql_wrapper(mysql, querybuf)){
@@ -241,6 +242,11 @@ int main(int argc, char* argv[])
           		//Insert succeeded
           		printf("Your debt has been added.\r\n");
           	}
+          	}
+          	  	else{
+          		//input was not valid
+          		printf("Your input was not valid. Please input a positive integer.\r\n");
+  			}
         }
         else if (option == 4) {
           option = OPT_EXIT;
