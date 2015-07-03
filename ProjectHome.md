@@ -1,0 +1,1 @@
+Coursework designed to demonstrate exploitable errors in code.
